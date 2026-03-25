@@ -3,10 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>궁합 분석기 — MBTI & 심리 테스트</title>
+<title>궁합 분석기 — MBTI & 심리 테스트로 알아보는 우리의 궁합</title>
+
+<!-- OG / SNS 공유 메타태그 -->
+<meta name="description" content="MBTI와 심리 테스트로 알아보는 두 사람의 궁합 점수! 나와 그 사람의 궁합은 몇 점일까?">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mbti-goonghap.vercel.app/">
+<meta property="og:title" content="🔮 우리 궁합 몇 점일까? — MBTI 궁합 분석기">
+<meta property="og:description" content="MBTI와 심리 테스트로 알아보는 두 사람의 궁합 점수! 지금 바로 확인해보세요 💜">
+<meta property="og:image" content="https://mbti-goonghap.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="🔮 우리 궁합 몇 점일까? — MBTI 궁합 분석기">
+<meta name="twitter:description" content="MBTI와 심리 테스트로 알아보는 두 사람의 궁합 점수!">
+<meta name="twitter:image" content="https://mbti-goonghap.vercel.app/og-image.png">
+
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
 <script src="https://js.tosspayments.com/v1/payment"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
 <script src="config.js"></script>
 <style>
 :root {
@@ -560,6 +574,25 @@ body {
   letter-spacing: 1px;
 }
 .restart-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+/* ─── 카카오 공유 버튼 ─── */
+.kakao-share-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; margin-top: 12px; padding: 14px;
+  background: #FEE500; border: none; border-radius: 14px;
+  color: #191919; font-family: inherit; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.3s;
+}
+.kakao-share-btn:hover { background: #f5dc00; transform: translateY(-1px); }
+.kakao-share-btn img { width: 20px; height: 20px; }
+
+/* ─── 광고 배너 ─── */
+.ad-banner {
+  margin: 24px 0; padding: 16px;
+  background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1);
+  border-radius: 12px; text-align: center;
+  color: var(--text-muted); font-size: 12px;
+}
 
 /* Responsive */
 @media (max-width: 500px) {
@@ -1117,6 +1150,22 @@ function renderResultsHTML(r) {
     `}
 
     ${isPremium ? `<button class="pdf-btn" onclick="downloadPDF()">📄 PDF 리포트 다운로드</button>` : ''}
+
+    <!-- 카카오톡 공유 버튼 (무료/유료 모두 노출) -->
+    <button class="kakao-share-btn" onclick="shareKakao()">
+      <img src="https://developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png" alt="카카오">
+      카카오톡으로 공유하기
+    </button>
+
+    <!-- 광고 배너 (무료 사용자만) -->
+    ${!isPremium ? `
+      <div class="ad-banner">
+        <!-- 구글 애드센스 코드를 아래에 붙여넣으세요 -->
+        <!-- <ins class="adsbygoogle" ...></ins> -->
+        광고 영역
+      </div>
+    ` : ''}
+
     <button class="restart-btn" onclick="location.reload()">🔄 다시 분석하기</button>
   `;
 
@@ -1233,8 +1282,50 @@ function downloadPDF() {
   }).from(content).save();
 }
 
-// 페이지 로드 시 결제 리다이렉트 처리
-document.addEventListener('DOMContentLoaded', handlePaymentRedirect);
+// 페이지 로드 시 결제 리다이렉트 처리 + 카카오 SDK 초기화
+document.addEventListener('DOMContentLoaded', () => {
+  handlePaymentRedirect();
+  if (typeof Kakao !== 'undefined' && KAKAO_APP_KEY && !KAKAO_APP_KEY.includes('여기에')) {
+    Kakao.init(KAKAO_APP_KEY);
+  }
+});
+
+// ─── 카카오톡 공유 ───
+function shareKakao() {
+  if (typeof Kakao === 'undefined' || !Kakao.isInitialized()) {
+    // 카카오 앱키 미설정 시 URL 복사로 폴백
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => alert('링크가 복사되었습니다! 카카오톡에 붙여넣기 하세요 📋'))
+      .catch(() => alert('주소창에서 URL을 직접 복사해주세요.'));
+    return;
+  }
+
+  const score = cachedResults ? cachedResults.finalScore : '';
+  const p1 = person1.name || '사람A';
+  const p2 = person2.name || '사람B';
+
+  Kakao.Share.sendDefault({
+    objectType: 'feed',
+    content: {
+      title: `💜 ${p1} × ${p2} 궁합 점수: ${score}점!`,
+      description: 'MBTI & 심리 테스트로 알아보는 두 사람의 궁합 — 우리는 몇 점일까?',
+      imageUrl: 'https://mbti-goonghap.vercel.app/og-image.png',
+      link: {
+        mobileWebUrl: 'https://mbti-goonghap.vercel.app',
+        webUrl: 'https://mbti-goonghap.vercel.app',
+      },
+    },
+    buttons: [
+      {
+        title: '나도 해보기 🔮',
+        link: {
+          mobileWebUrl: 'https://mbti-goonghap.vercel.app',
+          webUrl: 'https://mbti-goonghap.vercel.app',
+        },
+      },
+    ],
+  });
+}
 
 function getMBTIAnalysis(m1, m2) {
   const analyses = [];
