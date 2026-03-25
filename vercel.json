@@ -1,7 +1,6 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/", "destination": "/compatibility.html" },
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
   "headers": [
