@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://ktaaadltzoyljlxzaqax.supabase.co/rest/v1/payments?limit=1\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YWFhZGx0em95bGpseHphcWF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MzE3MjIsImV4cCI6MjA5MDAwNzcyMn0.StOyDxIlpLmuCsvnYhj31q-J5jlE9h2o-Owenx0h2Cw\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YWFhZGx0em95bGpseHphcWF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MzE3MjIsImV4cCI6MjA5MDAwNzcyMn0.StOyDxIlpLmuCsvnYhj31q-J5jlE9h2o-Owenx0h2Cw\")",
+      "Bash(npm --version)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://mbti-goonghap-h643f8q3o-xier1108-9143s-projects.vercel.app/\")"
+    ]
+  }
+}

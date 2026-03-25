@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>궁합 분석기 — MBTI & 심리 테스트</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<script src="https://js.tosspayments.com/v1/payment"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="config.js"></script>
+<style>
+:root {
+  --bg: #0a0a12;
+  --surface: #12121e;
+  --card: #1a1a2e;
+  --card-hover: #22223a;
+  --primary: #c9a0ff;
+  --primary-dim: #8b5fbf;
+  --secondary: #ff6b9d;
+  --accent: #64ffda;
+  --text: #e8e6f0;
+  --text-dim: #8886a0;
+  --text-muted: #5a587a;
+  --glow-1: rgba(201,160,255,0.15);
+  --glow-2: rgba(255,107,157,0.1);
+  --gradient-1: linear-gradient(135deg, #c9a0ff 0%, #ff6b9d 50%, #ffb347 100%);
+  --gradient-2: linear-gradient(135deg, #64ffda 0%, #c9a0ff 100%);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Ambient background */
+.ambient {
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  pointer-events: none; z-index:0;
+  overflow: hidden;
+}
+.ambient .orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  animation: drift 20s ease-in-out infinite;
+}
+.ambient .orb:nth-child(1) {
+  width:500px; height:500px;
+  background: var(--glow-1);
+  top:-10%; left:-10%;
+  animation-delay: 0s;
+}
+.ambient .orb:nth-child(2) {
+  width:400px; height:400px;
+  background: var(--glow-2);
+  bottom:-15%; right:-10%;
+  animation-delay: -7s;
+}
+.ambient .orb:nth-child(3) {
+  width:300px; height:300px;
+  background: rgba(100,255,218,0.06);
+  top:40%; left:60%;
+  animation-delay: -14s;
+}
+@keyframes drift {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33% { transform: translate(40px,-30px) scale(1.1); }
+  66% { transform: translate(-20px,40px) scale(0.9); }
+}
+
+/* Stars */
+.stars {
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  pointer-events:none; z-index:0;
+}
+.star {
+  position: absolute;
+  width:2px; height:2px;
+  background:#fff;
+  border-radius:50%;
+  animation: twinkle 3s ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%,100% { opacity:0.2; }
+  50% { opacity:0.8; }
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+.header .icon-row {
+  font-size: 40px;
+  letter-spacing: 12px;
+  margin-bottom: 16px;
+  animation: floatIn 1s ease-out;
+}
+.header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 42px;
+  font-weight: 700;
+  background: var(--gradient-1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.3;
+  margin-bottom: 12px;
+  animation: floatIn 1s ease-out 0.1s both;
+}
+.header p {
+  color: var(--text-dim);
+  font-size: 15px;
+  font-weight: 300;
+  letter-spacing: 2px;
+  animation: floatIn 1s ease-out 0.2s both;
+}
+@keyframes floatIn {
+  from { opacity:0; transform:translateY(20px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+/* Progress bar */
+.progress-wrap {
+  margin-bottom: 40px;
+  animation: floatIn 0.8s ease-out 0.3s both;
+}
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.progress-bar {
+  height: 3px;
+  background: var(--card);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--gradient-1);
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* Sections */
+.section {
+  display: none;
+  animation: sectionIn 0.6s ease-out;
+}
+.section.active { display: block; }
+@keyframes sectionIn {
+  from { opacity:0; transform:translateY(30px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+.section-title {
+  font-size: 13px;
+  color: var(--primary);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.section-heading {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.section-desc {
+  color: var(--text-dim);
+  font-size: 14px;
+  margin-bottom: 32px;
+  line-height: 1.7;
+}
+
+/* Person tabs */
+.person-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.person-tab {
+  flex:1;
+  padding: 14px;
+  background: var(--card);
+  border: 1px solid transparent;
+  border-radius: 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+.person-tab.active {
+  border-color: var(--primary);
+  background: rgba(201,160,255,0.08);
+  color: var(--primary);
+}
+.person-tab .emoji { font-size: 24px; display:block; margin-bottom: 6px; }
+
+/* Name inputs */
+.name-inputs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.name-input-wrap {
+  flex: 1;
+  position: relative;
+}
+.name-input-wrap label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.name-input-wrap input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--card-hover);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.name-input-wrap input:focus {
+  border-color: var(--primary);
+}
+
+/* MBTI Grid */
+.mbti-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.mbti-btn {
+  padding: 16px;
+  background: var(--card);
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+}
+.mbti-btn:hover { background: var(--card-hover); }
+.mbti-btn.selected {
+  border-color: var(--primary);
+  background: rgba(201,160,255,0.1);
+}
+.mbti-btn .letter {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 4px;
+  background: var(--gradient-2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.mbti-btn .label {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+}
+
+.mbti-result-badge {
+  text-align: center;
+  padding: 20px;
+  background: var(--card);
+  border-radius: 14px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(201,160,255,0.15);
+}
+.mbti-result-badge .type {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  font-weight: 700;
+  background: var(--gradient-1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 4px;
+}
+.mbti-result-badge .desc {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* Psychology test cards */
+.psych-question {
+  margin-bottom: 28px;
+  animation: sectionIn 0.5s ease-out;
+}
+.psych-question .q-num {
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.psych-question .q-text {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.psych-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.psych-opt {
+  padding: 16px 20px;
+  background: var(--card);
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text);
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  line-height: 1.5;
+}
+.psych-opt:hover { background: var(--card-hover); transform: translateX(4px); }
+.psych-opt.selected {
+  border-color: var(--secondary);
+  background: rgba(255,107,157,0.08);
+}
+.psych-opt .opt-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  background: rgba(255,255,255,0.04);
+  flex-shrink: 0;
+}
+
+/* Buttons */
+.btn-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+}
+.btn {
+  flex: 1;
+  padding: 16px 24px;
+  border-radius: 12px;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  letter-spacing: 0.5px;
+}
+.btn-primary {
+  background: var(--gradient-1);
+  color: #0a0a12;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(201,160,255,0.3); }
+.btn-primary:disabled { opacity:0.4; cursor:not-allowed; transform:none; box-shadow:none; }
+.btn-ghost {
+  background: var(--card);
+  color: var(--text-dim);
+  border: 1px solid var(--card-hover);
+}
+.btn-ghost:hover { border-color: var(--text-muted); }
+
+/* Loading */
+.loading-wrap {
+  text-align: center;
+  padding: 60px 20px;
+}
+.loading-rings {
+  position: relative;
+  width: 100px; height: 100px;
+  margin: 0 auto 24px;
+}
+.loading-rings .ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  animation: spin 2s linear infinite;
+}
+.loading-rings .ring:nth-child(1) {
+  inset:0; border-top-color: var(--primary);
+}
+.loading-rings .ring:nth-child(2) {
+  inset:10px; border-right-color: var(--secondary);
+  animation-duration: 1.5s; animation-direction: reverse;
+}
+.loading-rings .ring:nth-child(3) {
+  inset:20px; border-bottom-color: var(--accent);
+  animation-duration: 1s;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  color: var(--text-dim);
+  font-size: 14px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+
+/* Results */
+.result-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.result-header .score-circle {
+  width: 140px; height: 140px;
+  margin: 0 auto 20px;
+  position: relative;
+}
+.result-header .score-circle svg {
+  transform: rotate(-90deg);
+}
+.result-header .score-circle .score-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.result-header .score-circle .score-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 38px;
+  font-weight: 700;
+  background: var(--gradient-1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.result-header .score-circle .score-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.result-header h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.result-header .couple-names {
+  font-size: 15px;
+  color: var(--text-dim);
+}
+
+.result-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.result-card .rc-title {
+  font-size: 12px;
+  color: var(--primary);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.result-card .rc-body {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text);
+}
+.result-card .rc-body strong {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.trait-bar-wrap {
+  margin-bottom: 14px;
+}
+.trait-bar-wrap .trait-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.trait-bar-wrap .trait-label span:first-child { color: var(--text); }
+.trait-bar-wrap .trait-label span:last-child { color: var(--accent); font-weight: 500; }
+.trait-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.trait-bar .fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1.5s cubic-bezier(0.16,1,0.3,1);
+}
+
+.advice-item {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 16px;
+  align-items: flex-start;
+}
+.advice-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.advice-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.restart-btn {
+  display: block;
+  width: 100%;
+  margin-top: 32px;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--card-hover);
+  border-radius: 14px;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  letter-spacing: 1px;
+}
+.restart-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+/* Responsive */
+@media (max-width: 500px) {
+  .header h1 { font-size: 30px; }
+  .name-inputs { flex-direction: column; }
+  .mbti-grid { gap: 8px; }
+  .mbti-btn { padding: 12px; }
+  .mbti-btn .letter { font-size: 22px; }
+}
+
+/* ─── Premium / Paywall ─── */
+.premium-gate { position: relative; }
+.premium-blur { filter: blur(5px); pointer-events: none; user-select: none; }
+.paywall-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(to bottom, rgba(10,10,18,0) 0%, rgba(10,10,18,0.97) 20%);
+  border-radius: 18px; z-index: 10; padding: 32px 24px; text-align: center;
+}
+.paywall-title {
+  font-size: 22px; font-weight: 700;
+  background: var(--gradient-1);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: 10px;
+}
+.paywall-desc { font-size: 13px; color: var(--text-dim); margin-bottom: 18px; line-height: 1.7; }
+.paywall-features {
+  display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; width: 100%; max-width: 280px;
+}
+.paywall-feature {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text-dim);
+  background: rgba(255,255,255,0.04); border-radius: 8px; padding: 8px 12px;
+}
+.paywall-feature span:first-child { font-size: 15px; }
+.pay-btn {
+  background: var(--gradient-1); border: none; border-radius: 50px;
+  padding: 14px 36px; font-family: inherit; font-size: 16px; font-weight: 700; color: #fff;
+  cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(201,160,255,0.35); margin-bottom: 10px;
+}
+.pay-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(201,160,255,0.5); }
+.pay-btn:active { transform: translateY(0); }
+.pay-secure { font-size: 11px; color: var(--text-muted); }
+.premium-badge {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  background: var(--gradient-1);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-left: 6px; vertical-align: middle;
+}
+.pdf-btn {
+  display: block; margin: 0 auto 12px;
+  padding: 10px 24px;
+  background: rgba(100,255,218,0.08); border: 1px solid rgba(100,255,218,0.3);
+  border-radius: 50px; color: var(--accent);
+  font-family: inherit; font-size: 13px; cursor: pointer; transition: all 0.3s;
+}
+.pdf-btn:hover { background: rgba(100,255,218,0.15); }
+</style>
+</head>
+<body>
+
+<div class="ambient">
+  <div class="orb"></div>
+  <div class="orb"></div>
+  <div class="orb"></div>
+</div>
+<div class="stars" id="stars"></div>
+
+<div class="container">
+  <div class="header">
+    <div class="icon-row">🌙 ✦ 🔮</div>
+    <h1>Soulmate<br>궁합 분석기</h1>
+    <p>MBTI &amp; 심리 테스트 기반 종합 궁합 분석</p>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span id="stepLabel">시작</span>
+      <span id="stepCount">0 / 6</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- STEP 0: Names -->
+  <div class="section active" id="step0">
+    <div class="section-title">Step 01</div>
+    <div class="section-heading">두 분의 이름을 알려주세요</div>
+    <div class="section-desc">궁합을 분석할 두 사람의 이름을 입력해주세요.</div>
+    <div class="name-inputs">
+      <div class="name-input-wrap">
+        <label>첫 번째 사람 💜</label>
+        <input type="text" id="name1" placeholder="이름 입력" maxlength="10">
+      </div>
+      <div class="name-input-wrap">
+        <label>두 번째 사람 🩷</label>
+        <input type="text" id="name2" placeholder="이름 입력" maxlength="10">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goStep(1)" id="nameNext">다음으로</button>
+    </div>
+  </div>
+
+  <!-- STEP 1: MBTI Person 1 -->
+  <div class="section" id="step1">
+    <div class="section-title">Step 02</div>
+    <div class="section-heading"><span id="p1name1">첫 번째 사람</span>의 MBTI</div>
+    <div class="section-desc">에너지 방향, 인식 기능, 판단 기능, 생활 양식을 선택해주세요.</div>
+    <div id="mbti1Area"></div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(0)">이전</button>
+      <button class="btn btn-primary" onclick="goStep(2)" id="mbti1Next" disabled>다음으로</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: MBTI Person 2 -->
+  <div class="section" id="step2">
+    <div class="section-title">Step 03</div>
+    <div class="section-heading"><span id="p2name1">두 번째 사람</span>의 MBTI</div>
+    <div class="section-desc">에너지 방향, 인식 기능, 판단 기능, 생활 양식을 선택해주세요.</div>
+    <div id="mbti2Area"></div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(1)">이전</button>
+      <button class="btn btn-primary" onclick="goStep(3)" id="mbti2Next" disabled>다음으로</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Psych test Person 1 -->
+  <div class="section" id="step3">
+    <div class="section-title">Step 04 — 심리 테스트</div>
+    <div class="section-heading"><span id="p1name2">첫 번째 사람</span>의 심리 분석</div>
+    <div class="section-desc">직감적으로 떠오르는 답을 골라주세요.</div>
+    <div id="psych1Area"></div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(2)">이전</button>
+      <button class="btn btn-primary" onclick="goStep(4)" id="psych1Next" disabled>다음으로</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Psych test Person 2 -->
+  <div class="section" id="step4">
+    <div class="section-title">Step 05 — 심리 테스트</div>
+    <div class="section-heading"><span id="p2name2">두 번째 사람</span>의 심리 분석</div>
+    <div class="section-desc">직감적으로 떠오르는 답을 골라주세요.</div>
+    <div id="psych2Area"></div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(3)">이전</button>
+      <button class="btn btn-primary" onclick="goStep(5)" id="psych2Next" disabled>결과 보기 ✨</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: Loading -->
+  <div class="section" id="step5">
+    <div class="loading-wrap">
+      <div class="loading-rings">
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="ring"></div>
+      </div>
+      <div class="loading-text" id="loadingText">두 분의 별자리를 읽고 있습니다...</div>
+    </div>
+  </div>
+
+  <!-- STEP 6: Results -->
+  <div class="section" id="step6">
+    <div id="resultContent"></div>
+  </div>
+</div>
+
+<script>
+// ─── Data ───
+const mbtiDimensions = [
+  { pair: ['E','I'], labels: ['외향 (Extraversion)','내향 (Introversion)'], icons: ['🌞','🌙'], cat: '에너지 방향' },
+  { pair: ['S','N'], labels: ['감각 (Sensing)','직관 (iNtuition)'], icons: ['🔍','💡'], cat: '인식 기능' },
+  { pair: ['T','F'], labels: ['사고 (Thinking)','감정 (Feeling)'], icons: ['🧠','💗'], cat: '판단 기능' },
+  { pair: ['J','P'], labels: ['판단 (Judging)','인식 (Perceiving)'], icons: ['📋','🎨'], cat: '생활 양식' }
+];
+
+const psychQuestions = [
+  {
+    q: "넓은 바다가 보입니다. 당신은 무엇을 하고 싶나요?",
+    opts: [
+      { text: "파도 소리를 들으며 해변을 걷는다", icon: "🏖️", trait: "안정" },
+      { text: "배를 타고 수평선 너머로 떠난다", icon: "⛵", trait: "모험" },
+      { text: "누군가와 함께 석양을 바라본다", icon: "🌅", trait: "교감" },
+      { text: "깊은 바닷속 세계를 탐험한다", icon: "🤿", trait: "탐구" }
+    ],
+    dimension: "관계 성향"
+  },
+  {
+    q: "갑자기 비가 내리기 시작합니다. 당신의 반응은?",
+    opts: [
+      { text: "우산을 찾거나 비를 피할 곳을 찾는다", icon: "☂️", trait: "현실" },
+      { text: "비를 맞으며 그 순간을 즐긴다", icon: "🌧️", trait: "감성" },
+      { text: "옆 사람에게 우산을 같이 쓰자고 한다", icon: "🫂", trait: "배려" },
+      { text: "비가 언제 그칠지 날씨를 확인한다", icon: "📱", trait: "분석" }
+    ],
+    dimension: "감정 처리"
+  },
+  {
+    q: "숲속에서 길을 잃었습니다. 어떻게 하나요?",
+    opts: [
+      { text: "높은 곳에 올라 방향을 파악한다", icon: "⛰️", trait: "주도" },
+      { text: "왔던 길의 흔적을 따라 되돌아간다", icon: "👣", trait: "신중" },
+      { text: "숲을 탐험하며 새로운 길을 찾는다", icon: "🌿", trait: "유연" },
+      { text: "누군가를 만날 때까지 기다린다", icon: "🧘", trait: "수용" }
+    ],
+    dimension: "문제 해결"
+  },
+  {
+    q: "마법의 문이 나타났습니다. 문 너머에는?",
+    opts: [
+      { text: "과거의 행복했던 순간으로 갈 수 있다", icon: "⏪", trait: "회고" },
+      { text: "미래의 내 모습을 볼 수 있다", icon: "🔮", trait: "비전" },
+      { text: "사랑하는 사람의 마음을 들을 수 있다", icon: "💝", trait: "공감" },
+      { text: "전혀 새로운 세계가 펼쳐진다", icon: "✨", trait: "호기심" }
+    ],
+    dimension: "가치관"
+  },
+  {
+    q: "달빛 아래 편지를 쓴다면, 누구에게?",
+    opts: [
+      { text: "미래의 나에게 용기를 담아", icon: "💌", trait: "자기성장" },
+      { text: "지금 가장 보고 싶은 사람에게", icon: "🥺", trait: "애착" },
+      { text: "아직 만나지 못한 인연에게", icon: "🌠", trait: "로맨틱" },
+      { text: "오늘 하루를 일기처럼 기록한다", icon: "📝", trait: "성찰" }
+    ],
+    dimension: "사랑 표현"
+  }
+];
+
+// State
+let currentStep = 0;
+let person1 = { name:'', mbti:['','','',''], psych:[] };
+let person2 = { name:'', mbti:['','','',''], psych:[] };
+let cachedResults = null;
+
+// TOSS_CLIENT_KEY 는 config.js 에서 로드됩니다
+
+// Stars
+(function createStars() {
+  const c = document.getElementById('stars');
+  for(let i=0;i<60;i++){
+    const s = document.createElement('div');
+    s.className='star';
+    s.style.left = Math.random()*100+'%';
+    s.style.top = Math.random()*100+'%';
+    s.style.animationDelay = Math.random()*3+'s';
+    s.style.opacity = Math.random()*0.5+0.1;
+    c.appendChild(s);
+  }
+})();
+
+// Render MBTI selectors
+function renderMBTI(containerId, personKey) {
+  const area = document.getElementById(containerId);
+  area.innerHTML = '';
+  mbtiDimensions.forEach((dim, i) => {
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size:12px;color:var(--text-muted);letter-spacing:1px;margin-bottom:6px;margin-top:'+(i>0?'12px':'0');
+    label.textContent = dim.cat;
+    area.appendChild(label);
+
+    const grid = document.createElement('div');
+    grid.className = 'mbti-grid';
+    dim.pair.forEach((letter, j) => {
+      const btn = document.createElement('button');
+      btn.className = 'mbti-btn';
+      btn.innerHTML = `<span class="letter">${dim.icons[j]} ${letter}</span><span class="label">${dim.labels[j]}</span>`;
+      btn.onclick = () => {
+        const p = personKey === 1 ? person1 : person2;
+        p.mbti[i] = letter;
+        grid.querySelectorAll('.mbti-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        checkMBTIComplete(personKey);
+      };
+      grid.appendChild(btn);
+    });
+    area.appendChild(grid);
+  });
+}
+
+function checkMBTIComplete(personKey) {
+  const p = personKey === 1 ? person1 : person2;
+  const complete = p.mbti.every(v => v !== '');
+  document.getElementById(`mbti${personKey}Next`).disabled = !complete;
+}
+
+// Render Psych test
+function renderPsych(containerId, personKey) {
+  const area = document.getElementById(containerId);
+  area.innerHTML = '';
+  const p = personKey === 1 ? person1 : person2;
+  if (!p.psych.length) p.psych = new Array(psychQuestions.length).fill(-1);
+
+  psychQuestions.forEach((pq, qi) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'psych-question';
+    wrap.innerHTML = `<div class="q-num">${pq.dimension} — Q${qi+1}</div><div class="q-text">${pq.q}</div>`;
+    const opts = document.createElement('div');
+    opts.className = 'psych-options';
+    pq.opts.forEach((opt, oi) => {
+      const btn = document.createElement('button');
+      btn.className = 'psych-opt' + (p.psych[qi] === oi ? ' selected' : '');
+      btn.innerHTML = `<div class="opt-icon">${opt.icon}</div><span>${opt.text}</span>`;
+      btn.onclick = () => {
+        p.psych[qi] = oi;
+        opts.querySelectorAll('.psych-opt').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        checkPsychComplete(personKey);
+      };
+      opts.appendChild(btn);
+    });
+    wrap.appendChild(opts);
+    area.appendChild(wrap);
+  });
+}
+
+function checkPsychComplete(personKey) {
+  const p = personKey === 1 ? person1 : person2;
+  const complete = p.psych.every(v => v >= 0);
+  document.getElementById(`psych${personKey}Next`).disabled = !complete;
+}
+
+const stepLabels = ['이름 입력','MBTI 선택 (1)','MBTI 선택 (2)','심리 테스트 (1)','심리 테스트 (2)','분석 중','결과'];
+
+function goStep(step) {
+  // Validation
+  if (step === 1) {
+    person1.name = document.getElementById('name1').value.trim() || '사람 A';
+    person2.name = document.getElementById('name2').value.trim() || '사람 B';
+  }
+  if (step >= 1) {
+    document.getElementById('p1name1').textContent = person1.name;
+    document.getElementById('p1name2').textContent = person1.name;
+    document.getElementById('p2name1').textContent = person2.name;
+    document.getElementById('p2name2').textContent = person2.name;
+  }
+
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`step${step}`).classList.add('active');
+  currentStep = step;
+
+  document.getElementById('stepLabel').textContent = stepLabels[step];
+  document.getElementById('stepCount').textContent = `${Math.min(step,6)} / 6`;
+  document.getElementById('progressFill').style.width = (step/6*100)+'%';
+
+  if (step === 1) renderMBTI('mbti1Area', 1);
+  if (step === 2) renderMBTI('mbti2Area', 2);
+  if (step === 3) renderPsych('psych1Area', 1);
+  if (step === 4) renderPsych('psych2Area', 2);
+  if (step === 5) startAnalysis();
+
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+// ─── Analysis engine ───
+const mbtiNames = {
+  INTJ:'전략가',INTP:'논리술사',ENTJ:'통솔자',ENTP:'변론가',
+  INFJ:'옹호자',INFP:'중재자',ENFJ:'선도자',ENFP:'활동가',
+  ISTJ:'현실주의자',ISFJ:'수호자',ESTJ:'경영자',ESFJ:'집정관',
+  ISTP:'만능재주꾼',ISFP:'모험가',ESTP:'사업가',ESFP:'연예인'
+};
+
+// MBTI compatibility matrix (simplified scoring)
+function mbtiScore(m1, m2) {
+  let score = 50;
+  // E/I: complement or same
+  if (m1[0] !== m2[0]) score += 5; else score += 3;
+  // S/N: same is better
+  if (m1[1] === m2[1]) score += 8; else score += 2;
+  // T/F: complement is good
+  if (m1[2] !== m2[2]) score += 10; else score += 5;
+  // J/P: complement or same both work
+  if (m1[3] !== m2[3]) score += 7; else score += 6;
+
+  // Special golden pairs
+  const golden = [['INFJ','ENTP'],['INTJ','ENFP'],['INFP','ENTJ'],['INTP','ENFJ'],
+    ['ISFJ','ESTP'],['ISTJ','ESFP'],['ISFP','ESTJ'],['ISTP','ESFJ']];
+  const t1 = m1.join(''), t2 = m2.join('');
+  for (const [a,b] of golden) {
+    if ((t1===a&&t2===b)||(t1===b&&t2===a)) { score += 15; break; }
+  }
+  // Same type bonus
+  if (t1===t2) score += 5;
+
+  return Math.min(score, 100);
+}
+
+function psychScore(p1, p2) {
+  let match = 0;
+  for (let i=0; i<p1.length; i++) {
+    if (p1[i] === p2[i]) match += 12; // same answer
+    else if (Math.abs(p1[i]-p2[i])===1) match += 8; // adjacent
+    else match += 4; // different
+  }
+  return Math.min(Math.round(match / p1.length * 1.5), 100);
+}
+
+function getTraits(psych) {
+  return psych.map((ans, i) => psychQuestions[i].opts[ans].trait);
+}
+
+function startAnalysis() {
+  const msgs = [
+    '두 분의 별자리를 읽고 있습니다...',
+    'MBTI 유형 궁합을 계산하는 중...',
+    '심리 테스트 결과를 해석하는 중...',
+    '감정 파장을 분석하고 있습니다...',
+    '운명의 실을 풀고 있습니다...'
+  ];
+  let i = 0;
+  const interval = setInterval(() => {
+    i++;
+    if (i < msgs.length) {
+      document.getElementById('loadingText').textContent = msgs[i];
+    }
+  }, 800);
+
+  setTimeout(() => {
+    clearInterval(interval);
+    showResults();
+  }, 4000);
+}
+
+function showResults() {
+  const m1 = person1.mbti.join('');
+  const m2 = person2.mbti.join('');
+  const mScore = mbtiScore(person1.mbti, person2.mbti);
+  const pScore = psychScore(person1.psych, person2.psych);
+  const totalScore = Math.round(mScore * 0.45 + pScore * 0.45 + Math.random()*10);
+  const finalScore = Math.min(Math.max(totalScore, 25), 99);
+
+  const t1 = getTraits(person1.psych);
+  const t2 = getTraits(person2.psych);
+
+  const categories = [
+    { name: '감정 교감', score: Math.min(Math.round(mScore*0.5 + pScore*0.5 + Math.random()*10), 100) },
+    { name: '소통 방식', score: Math.min(Math.round(mScore*0.6 + pScore*0.3 + Math.random()*15), 100) },
+    { name: '가치관 일치', score: Math.min(Math.round(pScore*0.7 + mScore*0.2 + Math.random()*10), 100) },
+    { name: '갈등 해결력', score: Math.min(Math.round(mScore*0.4 + pScore*0.4 + Math.random()*20), 100) },
+    { name: '성장 잠재력', score: Math.min(Math.round(mScore*0.3 + pScore*0.5 + Math.random()*20), 100) }
+  ];
+
+  const scoreComment = finalScore >= 85 ? '운명적 만남 💫' :
+    finalScore >= 70 ? '환상의 짝꿍 ✨' :
+    finalScore >= 55 ? '좋은 인연 🌸' :
+    finalScore >= 40 ? '노력하면 빛날 관계 🌱' : '서로 다른 매력의 만남 🎭';
+
+  const mbtiAnalysis = getMBTIAnalysis(m1, m2);
+  const psychAnalysis = getPsychAnalysis(t1, t2);
+  const advice = getAdvice(m1, m2, t1, t2, finalScore);
+
+  // 결제 리다이렉트 후 복구를 위해 결과 캐싱
+  cachedResults = { m1, m2, finalScore, t1, t2, categories, scoreComment, mbtiAnalysis, psychAnalysis, advice };
+  sessionStorage.setItem('cachedResults', JSON.stringify(cachedResults));
+
+  renderResultsHTML(cachedResults);
+  goStep(6);
+}
+
+function renderResultsHTML(r) {
+  const isPremium = checkPremiumToken();
+  const { m1, m2, finalScore, t1, t2, categories, scoreComment, mbtiAnalysis, psychAnalysis, advice } = r;
+
+  const colors = ['var(--primary)','var(--secondary)','var(--accent)','#ffb347','#ff6b9d'];
+  const circumference = 2 * Math.PI * 58;
+
+  const premiumCards = `
+    <div class="result-card" style="animation:sectionIn 0.6s ease-out 0.2s both">
+      <div class="rc-title">🧬 MBTI 궁합 분석<span class="premium-badge">✦ PREMIUM</span></div>
+      <div class="rc-body">
+        <strong>${person1.name}</strong>은(는) <strong>${mbtiNames[m1]} (${m1})</strong>,
+        <strong>${person2.name}</strong>은(는) <strong>${mbtiNames[m2]} (${m2})</strong>입니다.
+        <br><br>${mbtiAnalysis}
+      </div>
+    </div>
+    <div class="result-card" style="animation:sectionIn 0.6s ease-out 0.3s both">
+      <div class="rc-title">🔮 심리 분석 결과<span class="premium-badge">✦ PREMIUM</span></div>
+      <div class="rc-body">
+        <strong>${person1.name}</strong>의 핵심 성향: ${t1.join(', ')}<br>
+        <strong>${person2.name}</strong>의 핵심 성향: ${t2.join(', ')}
+        <br><br>${psychAnalysis}
+      </div>
+    </div>
+    <div class="result-card" style="animation:sectionIn 0.6s ease-out 0.4s both">
+      <div class="rc-title">💡 관계 조언<span class="premium-badge">✦ PREMIUM</span></div>
+      <div class="rc-body">
+        ${advice.map(a => `
+          <div class="advice-item">
+            <div class="advice-icon" style="background:rgba(201,160,255,0.1)">${a.icon}</div>
+            <div class="advice-text">${a.text}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  const html = `
+    <div class="result-header" style="animation:sectionIn 0.6s ease-out">
+      <div class="score-circle">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="58" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
+          <circle cx="70" cy="70" r="58" fill="none" stroke="url(#scoreGrad)" stroke-width="6"
+            stroke-dasharray="${circumference}" stroke-dashoffset="${circumference - (finalScore/100)*circumference}"
+            stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="var(--primary)"/>
+              <stop offset="50%" stop-color="var(--secondary)"/>
+              <stop offset="100%" stop-color="#ffb347"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="score-text">
+          <div class="score-num">${finalScore}</div>
+          <div class="score-label">점</div>
+        </div>
+      </div>
+      <h2>${scoreComment}</h2>
+      <div class="couple-names">${person1.name} (${m1}) × ${person2.name} (${m2})</div>
+    </div>
+
+    <div class="result-card" style="animation:sectionIn 0.6s ease-out 0.1s both">
+      <div class="rc-title">📊 세부 궁합 지표</div>
+      <div class="rc-body">
+        ${categories.map((c,i) => `
+          <div class="trait-bar-wrap">
+            <div class="trait-label"><span>${c.name}</span><span>${c.score}%</span></div>
+            <div class="trait-bar"><div class="fill" style="width:${c.score}%;background:${colors[i]}"></div></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    ${isPremium ? premiumCards : `
+      <div class="premium-gate">
+        <div class="premium-blur">${premiumCards}</div>
+        <div class="paywall-overlay">
+          <div class="paywall-title">✦ 전체 분석 잠금 해제</div>
+          <div class="paywall-desc">MBTI 심층 분석 · 심리 분석 결과 · 맞춤 관계 조언을<br>지금 바로 확인하세요</div>
+          <div class="paywall-features">
+            <div class="paywall-feature"><span>🧬</span><span>MBTI 유형별 상세 궁합 분석</span></div>
+            <div class="paywall-feature"><span>🔮</span><span>심리 성향 심층 분석 결과</span></div>
+            <div class="paywall-feature"><span>💡</span><span>맞춤 관계 개선 조언 전체 공개</span></div>
+            <div class="paywall-feature"><span>📄</span><span>PDF 리포트 다운로드</span></div>
+          </div>
+          <button class="pay-btn" onclick="initPayment()">🔓 ₩900에 전체 분석 보기</button>
+          <div class="pay-secure">🔒 토스페이먼츠 안전 결제 · 24시간 이용 가능</div>
+        </div>
+      </div>
+    `}
+
+    ${isPremium ? `<button class="pdf-btn" onclick="downloadPDF()">📄 PDF 리포트 다운로드</button>` : ''}
+    <button class="restart-btn" onclick="location.reload()">🔄 다시 분석하기</button>
+  `;
+
+  document.getElementById('resultContent').innerHTML = html;
+}
+
+// ─── Premium / Payment ───
+function checkPremiumToken() {
+  try {
+    const stored = localStorage.getItem('mbti_premium_token');
+    if (!stored) return false;
+    const data = JSON.parse(stored);
+    return data.expires > Date.now();
+  } catch(e) { return false; }
+}
+
+async function initPayment() {
+  // 리다이렉트 후 복구를 위해 현재 상태 저장
+  sessionStorage.setItem('saved_person1', JSON.stringify(person1));
+  sessionStorage.setItem('saved_person2', JSON.stringify(person2));
+  if (cachedResults) sessionStorage.setItem('cachedResults', JSON.stringify(cachedResults));
+
+  const orderId = 'mbti_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+  try {
+    const tossPayments = TossPayments(TOSS_CLIENT_KEY);
+    await tossPayments.requestPayment('카드', {
+      amount: 900,
+      orderId,
+      orderName: `${person1.name} × ${person2.name} 궁합 상세 분석`,
+      customerName: person1.name,
+      successUrl: window.location.origin + window.location.pathname + '?paymentResult=success',
+      failUrl: window.location.origin + window.location.pathname + '?paymentResult=fail',
+    });
+  } catch(err) {
+    if (err.code !== 'USER_CANCEL') {
+      alert('결제 중 오류가 발생했습니다: ' + err.message);
+    }
+  }
+}
+
+async function confirmPayment(paymentKey, orderId, amount) {
+  try {
+    const res = await fetch('/api/confirm-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentKey, orderId, amount })
+    });
+    if (!res.ok) throw new Error('서버 오류 ' + res.status);
+    const data = await res.json();
+    if (data.accessToken) {
+      localStorage.setItem('mbti_premium_token', JSON.stringify({
+        token: data.accessToken,
+        expires: Date.now() + 24 * 60 * 60 * 1000
+      }));
+      return true;
+    }
+  } catch(e) {
+    console.error('결제 확인 오류:', e);
+  }
+  return false;
+}
+
+async function handlePaymentRedirect() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('paymentResult') !== 'success') return;
+
+  const paymentKey = params.get('paymentKey');
+  const orderId = params.get('orderId');
+  const amount = parseInt(params.get('amount') || '900');
+
+  if (!paymentKey || !orderId) return;
+
+  // 저장된 상태 복구
+  const p1 = sessionStorage.getItem('saved_person1');
+  const p2 = sessionStorage.getItem('saved_person2');
+  const saved = sessionStorage.getItem('cachedResults');
+
+  if (p1) person1 = JSON.parse(p1);
+  if (p2) person2 = JSON.parse(p2);
+
+  const success = await confirmPayment(paymentKey, orderId, amount);
+
+  // URL 정리
+  window.history.replaceState({}, '', window.location.pathname);
+  ['saved_person1', 'saved_person2', 'cachedResults'].forEach(k => sessionStorage.removeItem(k));
+
+  if (success) {
+    if (saved) {
+      cachedResults = JSON.parse(saved);
+      renderResultsHTML(cachedResults);
+    } else {
+      showResults();
+    }
+    goStep(6);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    alert('결제 확인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+  }
+}
+
+function downloadPDF() {
+  if (typeof html2pdf === 'undefined') {
+    alert('PDF 라이브러리를 로드 중입니다. 잠시 후 다시 시도해주세요.');
+    return;
+  }
+  const content = document.getElementById('resultContent');
+  html2pdf().set({
+    margin: 10,
+    filename: `${person1.name}_${person2.name}_궁합분석.pdf`,
+    image: { type: 'jpeg', quality: 0.95 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0a0a12' },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  }).from(content).save();
+}
+
+// 페이지 로드 시 결제 리다이렉트 처리
+document.addEventListener('DOMContentLoaded', handlePaymentRedirect);
+
+function getMBTIAnalysis(m1, m2) {
+  const analyses = [];
+  if (m1[0]!==m2[0]) analyses.push('에너지 방향이 서로 반대여서 <strong>상호 보완적</strong>인 관계를 형성합니다. 한 쪽이 사교적인 에너지를 제공하면, 다른 쪽은 깊은 내면의 안정감을 선사합니다.');
+  else if (m1[0]==='E') analyses.push('둘 다 <strong>외향적</strong>이라 함께 있을 때 에너지가 넘칩니다. 다만 서로에게 조용한 시간을 배려해주는 것이 중요합니다.');
+  else analyses.push('둘 다 <strong>내향적</strong>이라 깊고 의미 있는 대화를 나눌 수 있습니다. 하지만 가끔은 함께 밖으로 나가는 모험도 필요합니다.');
+
+  if (m1[1]===m2[1]) analyses.push('같은 인식 기능을 가져 세상을 바라보는 <strong>시각이 유사</strong>합니다.');
+  else analyses.push('하나는 현실적, 하나는 이상적인 시각을 가져 <strong>균형 잡힌 관점</strong>을 만들어갑니다.');
+
+  if (m1[2]!==m2[2]) analyses.push('사고와 감정의 <strong>상호 보완</strong>이 이루어져 결정을 내릴 때 더 풍부한 판단이 가능합니다.');
+  else analyses.push('같은 판단 기능을 공유해 의사결정에서 <strong>공감대</strong>가 잘 형성됩니다.');
+
+  return analyses.join(' ');
+}
+
+function getPsychAnalysis(t1, t2) {
+  const shared = t1.filter((t,i) => t === t2[i]);
+  const diff = t1.filter((t,i) => t !== t2[i]);
+
+  let text = '';
+  if (shared.length >= 3) {
+    text = `두 분은 <strong>${shared.join(', ')}</strong> 등 많은 성향을 공유하고 있어 자연스러운 공감대가 형성됩니다. 비슷한 가치관 덕분에 갈등이 적고 편안한 관계를 유지할 수 있습니다.`;
+  } else if (shared.length >= 1) {
+    text = `<strong>${shared.join(', ')}</strong> 성향에서 공통점이 발견됩니다. 이 부분이 두 분의 관계를 이어주는 핵심 연결고리가 됩니다. 다른 부분에서는 서로의 다양한 면을 발견하는 즐거움이 있을 거예요.`;
+  } else {
+    text = '두 분은 각기 다른 성향을 가지고 있어 서로에게 <strong>새로운 세계</strong>를 열어줄 수 있는 관계입니다. 차이를 존중한다면 가장 풍요로운 성장을 함께 경험할 수 있습니다.';
+  }
+  return text;
+}
+
+function getAdvice(m1, m2, t1, t2, score) {
+  const advice = [];
+
+  if (m1[0]!==m2[0]) {
+    advice.push({ icon:'🔄', text:'외향-내향 커플은 서로의 에너지 충전 방식을 존중해주세요. 혼자만의 시간과 함께하는 시간의 균형이 중요합니다.' });
+  }
+  if (t1.includes('모험') || t2.includes('모험')) {
+    advice.push({ icon:'🎯', text:'새로운 경험을 함께 시도해보세요. 여행, 취미 활동 등 공동의 모험이 관계를 더욱 깊게 만들어줍니다.' });
+  }
+  if (t1.includes('안정') || t2.includes('안정')) {
+    advice.push({ icon:'🏡', text:'일상 속 작은 루틴을 함께 만들어보세요. 안정감이 있는 관계가 오래 지속됩니다.' });
+  }
+  advice.push({ icon:'💬', text:'서로의 감정 표현 방식이 다를 수 있습니다. "나는 이렇게 느꼈어"라는 표현을 자주 연습해보세요.' });
+  if (score < 60) {
+    advice.push({ icon:'🌱', text:'차이가 많다는 건 성장의 기회가 많다는 뜻입니다. 서로의 다름을 인정하고 배움의 자세로 다가가보세요.' });
+  } else {
+    advice.push({ icon:'⭐', text:'높은 궁합을 유지하려면 서로를 당연하게 여기지 않는 것이 중요합니다. 감사를 자주 표현해주세요.' });
+  }
+  return advice;
+}
+</script>
+</body>
+</html>
