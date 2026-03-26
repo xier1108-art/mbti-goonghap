@@ -1054,57 +1054,112 @@ async function handlePaymentRedirect() {
 function downloadPDF() {
   if (typeof html2pdf === 'undefined') { alert('PDF 라이브러리를 로드 중입니다. 잠시 후 다시 시도해주세요.'); return; }
 
-  // PDF용 라이트 테마 CSS 임시 주입
-  const pdfStyle = document.createElement('style');
-  pdfStyle.id = 'pdf-light-style';
-  pdfStyle.textContent = `
-    #resultContent { background: #fff !important; padding: 20px !important; }
-    #resultContent .result-card {
-      background: #f5f0ff !important; border: 1px solid #d4b8ff !important;
-      margin-bottom: 14px !important;
-    }
-    #resultContent .rc-title { color: #6d28d9 !important; -webkit-text-fill-color: #6d28d9 !important; }
-    #resultContent .rc-body { color: #1a1a2e !important; }
-    #resultContent .rc-body strong { color: #6d28d9 !important; }
-    #resultContent .result-header h2 { color: #1a1a2e !important; }
-    #resultContent .couple-names { color: #555 !important; }
-    #resultContent .trait-label span:first-child { color: #1a1a2e !important; }
-    #resultContent .trait-label span:last-child { color: #059669 !important; }
-    #resultContent .archetype-badge {
-      background: rgba(109,40,217,0.08) !important; color: #6d28d9 !important;
-      border-color: rgba(109,40,217,0.3) !important;
-    }
-    #resultContent .score-num { color: #c9a0ff !important; -webkit-text-fill-color: #c9a0ff !important; }
-    #resultContent .score-label { color: #888 !important; }
-    #resultContent .advice-text { color: #1a1a2e !important; }
-    #resultContent .advice-icon { background: rgba(109,40,217,0.1) !important; }
-    #resultContent .solo-result-note {
-      background: rgba(5,150,105,0.08) !important; color: #059669 !important;
-    }
-    #resultContent .kakao-share-btn,
-    #resultContent .pdf-btn,
-    #resultContent .restart-btn,
-    #resultContent .ad-banner { display: none !important; }
-    #resultContent .premium-gate { position: static !important; }
-    #resultContent .premium-blur { filter: none !important; pointer-events: auto !important; }
-    #resultContent .paywall-overlay { display: none !important; }
-  `;
-  document.head.appendChild(pdfStyle);
-
   const content = document.getElementById('resultContent');
   html2pdf().set({
     margin: [12, 15],
     filename: `${person1.name}_${person2.name}_궁합분석.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      // onclone: html2canvas가 렌더링 전 DOM 복사본을 전달 — 여기서 조작해야 fixed 요소 문제 해결
+      onclone: function(clonedDoc) {
+        // ① position:fixed 배경 요소 제거 (검은 화면의 원인)
+        const amb = clonedDoc.querySelector('.ambient');
+        const strs = clonedDoc.getElementById('stars');
+        if (amb) amb.style.display = 'none';
+        if (strs) strs.style.display = 'none';
+
+        // ② body/html 배경 흰색으로
+        clonedDoc.body.style.cssText += 'background:#fff!important;color:#1a1a2e!important;';
+        clonedDoc.documentElement.style.cssText += 'background:#fff!important;';
+
+        // ③ CSS 변수 오버라이드 (라이트 테마)
+        const root = clonedDoc.documentElement;
+        root.style.setProperty('--bg',       '#ffffff');
+        root.style.setProperty('--surface',  '#f8f8ff');
+        root.style.setProperty('--card',     '#f3eeff');
+        root.style.setProperty('--card-hover','#ede4ff');
+        root.style.setProperty('--text',     '#1a1a2e');
+        root.style.setProperty('--text-dim', '#44445a');
+        root.style.setProperty('--text-muted','#777790');
+        root.style.setProperty('--primary',  '#6d28d9');
+        root.style.setProperty('--secondary','#db2777');
+        root.style.setProperty('--accent',   '#059669');
+
+        // ④ gradient 텍스트 수동 교체 (transparent → 보라색)
+        clonedDoc.querySelectorAll('.score-num, .header h1').forEach(el => {
+          el.style.webkitTextFillColor = '#6d28d9';
+          el.style.color = '#6d28d9';
+          el.style.backgroundImage = 'none';
+        });
+        clonedDoc.querySelectorAll('.rc-title').forEach(el => {
+          el.style.color = '#6d28d9';
+          el.style.webkitTextFillColor = '#6d28d9';
+        });
+        clonedDoc.querySelectorAll('.result-header h2').forEach(el => {
+          el.style.color = '#1a1a2e';
+          el.style.webkitTextFillColor = '#1a1a2e';
+        });
+        clonedDoc.querySelectorAll('.archetype-badge').forEach(el => {
+          el.style.color = '#6d28d9';
+          el.style.webkitTextFillColor = '#6d28d9';
+          el.style.background = 'rgba(109,40,217,0.08)';
+          el.style.borderColor = 'rgba(109,40,217,0.3)';
+        });
+        clonedDoc.querySelectorAll('.paywall-title').forEach(el => {
+          el.style.color = '#6d28d9';
+          el.style.webkitTextFillColor = '#6d28d9';
+        });
+        clonedDoc.querySelectorAll('.premium-badge').forEach(el => {
+          el.style.color = '#6d28d9';
+          el.style.webkitTextFillColor = '#6d28d9';
+        });
+
+        // ⑤ 불필요한 요소 숨기기
+        ['.kakao-share-btn', '.ad-banner', '.restart-btn', '.pdf-btn',
+         '.paywall-overlay', '.progress-wrap', '.header'].forEach(sel => {
+          clonedDoc.querySelectorAll(sel).forEach(el => el.style.display = 'none');
+        });
+
+        // ⑥ 프리미엄 블러/게이트 해제
+        clonedDoc.querySelectorAll('.premium-blur').forEach(el => {
+          el.style.filter = 'none';
+          el.style.pointerEvents = 'auto';
+        });
+        clonedDoc.querySelectorAll('.premium-gate').forEach(el => {
+          el.style.position = 'static';
+        });
+
+        // ⑦ 카드 배경·텍스트 직접 지정
+        clonedDoc.querySelectorAll('.result-card').forEach(el => {
+          el.style.background = '#f3eeff';
+          el.style.border = '1px solid #d4b8ff';
+        });
+        clonedDoc.querySelectorAll('.rc-body').forEach(el => {
+          el.style.color = '#1a1a2e';
+        });
+        clonedDoc.querySelectorAll('.advice-text').forEach(el => {
+          el.style.color = '#1a1a2e';
+        });
+        clonedDoc.querySelectorAll('.couple-names').forEach(el => {
+          el.style.color = '#555577';
+        });
+        clonedDoc.querySelectorAll('.solo-result-note').forEach(el => {
+          el.style.background = 'rgba(5,150,105,0.08)';
+          el.style.color = '#059669';
+          el.style.borderColor = 'rgba(5,150,105,0.3)';
+        });
+        clonedDoc.querySelectorAll('.trait-label span').forEach(el => {
+          el.style.color = '#1a1a2e';
+          el.style.webkitTextFillColor = '#1a1a2e';
+        });
+      }
+    },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  }).from(content).save().then(() => {
-    const s = document.getElementById('pdf-light-style');
-    if (s) s.remove();
-  }).catch(() => {
-    const s = document.getElementById('pdf-light-style');
-    if (s) s.remove();
-  });
+  }).from(content).save();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
