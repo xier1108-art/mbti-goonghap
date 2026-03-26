@@ -1191,10 +1191,12 @@ function shareKakao() {
 
 // ─── 심층 분석 함수들 ───
 function getMBTIAnalysis(m1, m2) {
-  const [EI1, SN1, TF1, JP1] = m1;
-  const [EI2, SN2, TF2, JP2] = m2;
+  // m1, m2는 string("INFP") 또는 array(['I','N','F','P']) 둘 다 올 수 있음
+  const type1 = Array.isArray(m1) ? m1.join('') : m1;
+  const type2 = Array.isArray(m2) ? m2.join('') : m2;
+  const [EI1, SN1, TF1, JP1] = type1;
+  const [EI2, SN2, TF2, JP2] = type2;
   const n1 = person1.name, n2 = person2.name;
-  const type1 = m1.join(''), type2 = m2.join('');
   const typeName1 = mbtiNames[type1] || type1, typeName2 = mbtiNames[type2] || type2;
   let html = '';
 
