@@ -1334,6 +1334,8 @@ function getMBTIAnalysis(m1, m2) {
 
 function getPsychAnalysis(t1, t2, psych1, psych2) {
   const n1 = person1.name, n2 = person2.name;
+  const [EI1, SN1, TF1, JP1] = Array.isArray(t1) ? t1 : (t1||'????').split('');
+  const [EI2, SN2, TF2, JP2] = Array.isArray(t2) ? t2 : (t2||'????').split('');
   const attachLabels = ['안정형','불안형','회피형','혼합(공포회피)형'];
   const attach1 = attachLabels[psych1[5] ?? 0];
   const attach2 = attachLabels[psych2[5] ?? 0];
