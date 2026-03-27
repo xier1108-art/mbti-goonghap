@@ -238,13 +238,30 @@ body {
 .premium-blur { filter: blur(6px); pointer-events: none; user-select: none; max-height: 220px; overflow: hidden; }
 .paywall-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(to bottom, rgba(10,10,18,0) 0%, rgba(10,10,18,0.98) 18%); border-radius: 18px; z-index: 10; padding: 32px 24px; text-align: center; }
 
-/* ─── 새 페이월 카드 (블러 없음) ─── */
-.paywall-card { background: var(--card); border: 1px solid rgba(201,160,255,0.2); border-radius: 20px; padding: 28px 24px; margin-bottom: 16px; text-align: center; }
-.paywall-card .paywall-title { font-size: 20px; font-weight: 700; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; }
-.paywall-card .paywall-desc { color: var(--text-dim); font-size: 13px; margin-bottom: 20px; line-height: 1.7; }
-.paywall-card .paywall-features { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; text-align: left; }
-.paywall-card .paywall-feature { background: rgba(201,160,255,0.07); border-radius: 10px; padding: 10px 12px; font-size: 13px; color: var(--text); display: flex; gap: 8px; align-items: center; }
-.paywall-card .paywall-feature span:first-child { font-size: 16px; }
+/* ─── 페이월 카드 ─── */
+.paywall-card {
+  background: linear-gradient(145deg, rgba(201,160,255,0.1) 0%, rgba(255,107,157,0.07) 100%);
+  border: 1px solid rgba(201,160,255,0.3);
+  border-radius: 24px; padding: 32px 24px 28px; margin-bottom: 16px; text-align: center;
+}
+.paywall-card .paywall-title {
+  font-size: 22px; font-weight: 800;
+  background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: 6px;
+}
+.paywall-card .paywall-desc { color: var(--text-dim); font-size: 13px; margin-bottom: 22px; line-height: 1.7; }
+.paywall-card .paywall-features {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px;
+}
+.paywall-card .paywall-feature {
+  background: rgba(201,160,255,0.06); border: 1px solid rgba(201,160,255,0.18);
+  border-radius: 16px; padding: 16px 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; text-align: center; transition: background 0.2s;
+}
+.paywall-card .paywall-feature:hover { background: rgba(201,160,255,0.12); }
+.paywall-card .feat-icon { font-size: 28px; line-height: 1; }
+.paywall-card .feat-label { font-size: 12px; color: var(--text-dim); line-height: 1.5; word-break: keep-all; }
 .paywall-title { font-size: 22px; font-weight: 700; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 10px; }
 .paywall-desc { font-size: 13px; color: var(--text-dim); margin-bottom: 18px; line-height: 1.7; }
 .paywall-features { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; width: 100%; max-width: 280px; }
@@ -929,12 +946,24 @@ function renderResultsHTML(r) {
     ${isPremium ? premiumCards : `
       <div class="paywall-card">
         <div class="paywall-title">✦ 전체 분석 잠금 해제</div>
-        <div class="paywall-desc">지금 결제하면 아래 내용을 바로 확인할 수 있어요</div>
+        <div class="paywall-desc">₩900 결제 후 이번 분석에 한해 아래 전체 내용을 확인할 수 있어요</div>
         <div class="paywall-features">
-          <div class="paywall-feature"><span>🧬</span><span>MBTI 인지 기능 심층 분석</span></div>
-          <div class="paywall-feature"><span>🔮</span><span>심층 심리·애착 분석</span></div>
-          <div class="paywall-feature"><span>💡</span><span>맞춤 관계 조언 전체</span></div>
-          <div class="paywall-feature"><span>📄</span><span>PDF 리포트 다운로드</span></div>
+          <div class="paywall-feature">
+            <span class="feat-icon">🧬</span>
+            <span class="feat-label">MBTI 인지 기능<br>심층 분석</span>
+          </div>
+          <div class="paywall-feature">
+            <span class="feat-icon">🔮</span>
+            <span class="feat-label">심층 심리 &amp;<br>애착 유형 분석</span>
+          </div>
+          <div class="paywall-feature">
+            <span class="feat-icon">💡</span>
+            <span class="feat-label">맞춤 관계 조언<br>전체 공개</span>
+          </div>
+          <div class="paywall-feature">
+            <span class="feat-icon">📄</span>
+            <span class="feat-label">PDF 리포트<br>다운로드</span>
+          </div>
         </div>
         <button class="pay-btn" onclick="initPayment()">🔓 ₩900에 전체 분석 보기</button>
         <div class="pay-secure">🔒 토스페이먼츠 안전 결제 · 이번 분석 1회 이용</div>
@@ -1153,26 +1182,20 @@ function downloadPDF() {
   if (!cachedResults) { alert('먼저 분석을 완료해주세요.'); return; }
 
   const n1 = person1.name || '나', n2 = person2.name || '상대방';
-  const wrapper = document.createElement('div');
-  // opacity:0 + 뷰포트 내 위치 — html2canvas가 off-screen 요소를 캡처 못하는 문제 방지
-  wrapper.style.cssText = 'position:fixed;top:0;left:0;width:794px;background:#fff;opacity:0;pointer-events:none;z-index:9999;';
-  wrapper.innerHTML = buildPDFHTML(cachedResults);
-  document.body.appendChild(wrapper);
-
   const btn = document.querySelector('.pdf-btn');
   if (btn) { btn.textContent = '📄 생성 중...'; btn.disabled = true; }
 
+  // HTML 문자열을 직접 전달 — html2pdf가 내부적으로 DOM 생성·캡처·삭제 처리
+  // (DOM 요소 직접 전달 시 opacity/위치 트릭으로 인한 빈 페이지 문제 방지)
   html2pdf().set({
     margin: 0,
     filename: `${n1}_${n2}_궁합분석.pdf`,
     image: { type: 'jpeg', quality: 0.95 },
     html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  }).from(wrapper).save().then(() => {
-    document.body.removeChild(wrapper);
+  }).from(buildPDFHTML(cachedResults)).save().then(() => {
     if (btn) { btn.textContent = '📄 PDF 리포트 다운로드'; btn.disabled = false; }
   }).catch(() => {
-    document.body.removeChild(wrapper);
     if (btn) { btn.textContent = '📄 PDF 리포트 다운로드'; btn.disabled = false; }
     alert('PDF 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
   });
