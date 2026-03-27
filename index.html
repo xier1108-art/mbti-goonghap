@@ -251,7 +251,9 @@ body {
 }
 .paywall-card .paywall-desc { color: var(--text-dim); font-size: 13px; margin-bottom: 22px; line-height: 1.7; }
 .paywall-card .paywall-features {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px; margin-bottom: 24px;
 }
 .paywall-card .paywall-feature {
   background: rgba(201,160,255,0.06); border: 1px solid rgba(201,160,255,0.18);
@@ -1106,12 +1108,12 @@ function buildPDFHTML(r) {
           <div style="background:linear-gradient(90deg,#7c3aed,#db2777);height:10px;border-radius:6px;width:${Math.min(score,100)}%;"></div>
         </div>
       </td>
-      <td style="padding:7px 10px;font-weight:700;color:#7c3aed;font-size:13px;text-align:right;width:45px;">${score}점</td>
+      <td style="padding:7px 10px;font-weight:700;color:#7c3aed;font-size:13px;text-align:right;width:60px;white-space:nowrap;">${score}점</td>
     </tr>`;
   }).join('');
 
   const adviceHTML = (advice || []).map(a => `
-    <div style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:6px;padding:14px 16px;margin-bottom:12px;font-size:12.5px;line-height:1.85;color:#1a1a2e;">
+    <div style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:6px;padding:14px 16px;margin-bottom:12px;font-size:12.5px;line-height:1.9;color:#1a1a2e;page-break-inside:avoid;">
       ${a.icon || ''} ${a.text || ''}
     </div>`).join('');
 
@@ -1144,21 +1146,21 @@ function buildPDFHTML(r) {
     </div>
 
     <!-- 카테고리 점수 -->
-    <div style="margin-bottom:26px;">
+    <div style="margin-bottom:26px;page-break-inside:avoid;">
       <h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin:0 0 12px 0;padding-bottom:8px;border-bottom:2px solid #ede9fe;">📊 6가지 카테고리 상세 점수</h2>
-      <table style="width:100%;border-collapse:collapse;">${catRows}</table>
+      <table style="width:100%;border-collapse:collapse;line-height:1.6;">${catRows}</table>
     </div>
 
     <!-- MBTI 분석 -->
     <div style="margin-bottom:26px;">
       <h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin:0 0 12px 0;padding-bottom:8px;border-bottom:2px solid #ede9fe;">🔮 MBTI 유형별 심층 분석</h2>
-      <div style="background:#faf8ff;border-radius:12px;padding:18px 20px;font-size:12.5px;line-height:1.9;color:#222;">${mbtiAnalysis || ''}</div>
+      <div style="background:#faf8ff;border-radius:12px;padding:18px 20px;font-size:12.5px;line-height:2;color:#222;">${mbtiAnalysis || ''}</div>
     </div>
 
     <!-- 심리 분석 -->
     <div style="margin-bottom:26px;">
       <h2 style="font-size:15px;font-weight:700;color:#1a1a2e;margin:0 0 12px 0;padding-bottom:8px;border-bottom:2px solid #ede9fe;">🧠 심리 성향 심층 분석</h2>
-      <div style="background:#faf8ff;border-radius:12px;padding:18px 20px;font-size:12.5px;line-height:1.9;color:#222;">${psychAnalysis || ''}</div>
+      <div style="background:#faf8ff;border-radius:12px;padding:18px 20px;font-size:12.5px;line-height:2;color:#222;">${psychAnalysis || ''}</div>
     </div>
 
     <!-- 조언 -->
@@ -1188,11 +1190,12 @@ function downloadPDF() {
   // HTML 문자열을 직접 전달 — html2pdf가 내부적으로 DOM 생성·캡처·삭제 처리
   // (DOM 요소 직접 전달 시 opacity/위치 트릭으로 인한 빈 페이지 문제 방지)
   html2pdf().set({
-    margin: 0,
+    margin: [8, 0],
     filename: `${n1}_${n2}_궁합분석.pdf`,
     image: { type: 'jpeg', quality: 0.95 },
-    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: 794 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
   }).from(buildPDFHTML(cachedResults)).save().then(() => {
     if (btn) { btn.textContent = '📄 PDF 리포트 다운로드'; btn.disabled = false; }
   }).catch(() => {
