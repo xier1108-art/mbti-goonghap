@@ -235,8 +235,8 @@ body {
 
 /* ─── Premium / Paywall ─── */
 .premium-gate { position: relative; }
-.premium-blur { filter: blur(5px); pointer-events: none; user-select: none; }
-.paywall-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(to bottom, rgba(10,10,18,0) 0%, rgba(10,10,18,0.97) 20%); border-radius: 18px; z-index: 10; padding: 32px 24px; text-align: center; }
+.premium-blur { filter: blur(6px); pointer-events: none; user-select: none; max-height: 220px; overflow: hidden; }
+.paywall-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(to bottom, rgba(10,10,18,0) 0%, rgba(10,10,18,0.98) 18%); border-radius: 18px; z-index: 10; padding: 32px 24px; text-align: center; }
 .paywall-title { font-size: 22px; font-weight: 700; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 10px; }
 .paywall-desc { font-size: 13px; color: var(--text-dim); margin-bottom: 18px; line-height: 1.7; }
 .paywall-features { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; width: 100%; max-width: 280px; }
@@ -1062,16 +1062,19 @@ function buildPDFHTML(r) {
   const scoreColor = finalScore >= 75 ? '#7c3aed' : finalScore >= 55 ? '#b45309' : '#dc2626';
   const catNames = ['소통 스타일','애착 패턴','가치관','갈등 해결','사랑의 언어','미래 비전'];
 
-  const catRows = (categories || []).map((cat, i) => `
-    <tr>
-      <td style="padding:7px 10px;color:#444;font-size:12px;width:100px;">${catNames[i]||''}</td>
+  const catRows = (categories || []).map((cat) => {
+    const score = typeof cat === 'object' ? (cat.score ?? 0) : (cat ?? 0);
+    const label = typeof cat === 'object' ? (cat.name || '') : (catNames[0] || '');
+    return `<tr>
+      <td style="padding:7px 10px;color:#444;font-size:12px;width:120px;">${label}</td>
       <td style="padding:7px 10px;">
         <div style="background:#e5e7eb;border-radius:6px;height:10px;">
-          <div style="background:linear-gradient(90deg,#7c3aed,#db2777);height:10px;border-radius:6px;width:${Math.min(cat,100)}%;"></div>
+          <div style="background:linear-gradient(90deg,#7c3aed,#db2777);height:10px;border-radius:6px;width:${Math.min(score,100)}%;"></div>
         </div>
       </td>
-      <td style="padding:7px 10px;font-weight:700;color:#7c3aed;font-size:13px;text-align:right;width:45px;">${cat}점</td>
-    </tr>`).join('');
+      <td style="padding:7px 10px;font-weight:700;color:#7c3aed;font-size:13px;text-align:right;width:45px;">${score}점</td>
+    </tr>`;
+  }).join('');
 
   const adviceHTML = (advice || []).map(a => `
     <div style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:6px;padding:14px 16px;margin-bottom:12px;font-size:12.5px;line-height:1.85;color:#1a1a2e;">
@@ -1146,7 +1149,8 @@ function downloadPDF() {
 
   const n1 = person1.name || '나', n2 = person2.name || '상대방';
   const wrapper = document.createElement('div');
-  wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;z-index:-1;';
+  // opacity:0 + 뷰포트 내 위치 — html2canvas가 off-screen 요소를 캡처 못하는 문제 방지
+  wrapper.style.cssText = 'position:fixed;top:0;left:0;width:794px;background:#fff;opacity:0;pointer-events:none;z-index:9999;';
   wrapper.innerHTML = buildPDFHTML(cachedResults);
   document.body.appendChild(wrapper);
 
@@ -1334,8 +1338,8 @@ function getMBTIAnalysis(m1, m2) {
 
 function getPsychAnalysis(t1, t2, psych1, psych2) {
   const n1 = person1.name, n2 = person2.name;
-  const [EI1, SN1, TF1, JP1] = Array.isArray(t1) ? t1 : (t1||'????').split('');
-  const [EI2, SN2, TF2, JP2] = Array.isArray(t2) ? t2 : (t2||'????').split('');
+  const [EI1, SN1, TF1, JP1] = person1.mbti || ['?','?','?','?'];
+  const [EI2, SN2, TF2, JP2] = person2.mbti || ['?','?','?','?'];
   const attachLabels = ['안정형','불안형','회피형','혼합(공포회피)형'];
   const attach1 = attachLabels[psych1[5] ?? 0];
   const attach2 = attachLabels[psych2[5] ?? 0];
