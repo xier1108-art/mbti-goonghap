@@ -165,14 +165,35 @@ body {
 .btn-ghost:hover { border-color: var(--text-muted); }
 
 /* ─── Loading ─── */
-.loading-wrap { text-align: center; padding: 60px 20px; }
+.loading-wrap { text-align: center; padding: 40px 20px 20px; }
 .loading-rings { position: relative; width: 100px; height: 100px; margin: 0 auto 24px; }
 .loading-rings .ring { position: absolute; border-radius: 50%; border: 2px solid transparent; animation: spin 2s linear infinite; }
 .loading-rings .ring:nth-child(1) { inset:0; border-top-color: var(--primary); }
 .loading-rings .ring:nth-child(2) { inset:10px; border-right-color: var(--secondary); animation-duration: 1.5s; animation-direction: reverse; }
 .loading-rings .ring:nth-child(3) { inset:20px; border-bottom-color: var(--accent); animation-duration: 1s; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { color: var(--text-dim); font-size: 14px; animation: pulse 1.5s ease-in-out infinite; }
+.loading-text { color: var(--text-dim); font-size: 14px; animation: pulse 1.5s ease-in-out infinite; margin-bottom: 32px; }
+/* 스켈레톤 */
+.skeleton-wrap { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+.skeleton-card { background: var(--surface); border-radius: 16px; padding: 20px; overflow: hidden; }
+.sk-line { background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; border-radius: 6px; animation: shimmer 1.6s infinite; }
+.sk-title { height: 14px; width: 40%; margin-bottom: 14px; }
+.sk-body1 { height: 10px; width: 100%; margin-bottom: 8px; }
+.sk-body2 { height: 10px; width: 80%; margin-bottom: 8px; }
+.sk-body3 { height: 10px; width: 65%; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+/* 히스토리 */
+.history-wrap { margin-top: 28px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 20px; }
+.history-title { font-size: 12px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+.history-item { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; background: var(--surface); border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; font-size: 13px; gap: 8px; }
+.history-item:hover { background: rgba(201,160,255,0.1); }
+.history-names { font-weight: 600; color: var(--text); flex: 1; }
+.history-mbti { color: var(--text-dim); font-size: 11px; }
+.history-score { font-weight: 700; color: var(--primary); min-width: 36px; text-align: right; }
+.history-date { color: var(--text-muted); font-size: 11px; min-width: 56px; text-align: right; }
+/* 이미지 저장 버튼 */
+.save-img-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; background: rgba(201,160,255,0.1); border: 1px solid rgba(201,160,255,0.25); border-radius: 50px; color: var(--primary); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-bottom: 12px; font-family: inherit; }
+.save-img-btn:hover { background: rgba(201,160,255,0.2); }
 @keyframes pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
 
 /* ─── Results ─── */
@@ -333,6 +354,7 @@ body {
     <div class="btn-row">
       <button class="btn btn-primary" onclick="goStep(1)" id="modeNext" disabled>다음으로</button>
     </div>
+    <div id="historyWrap"></div>
   </div>
 
   <!-- STEP 1: 이름 입력 -->
@@ -411,6 +433,25 @@ body {
         <div class="ring"></div><div class="ring"></div><div class="ring"></div>
       </div>
       <div class="loading-text" id="loadingText">두 분의 별자리를 읽고 있습니다...</div>
+      <div class="skeleton-wrap">
+        <div class="skeleton-card">
+          <div class="sk-line sk-title"></div>
+          <div class="sk-line sk-body1"></div>
+          <div class="sk-line sk-body2"></div>
+          <div class="sk-line sk-body3"></div>
+        </div>
+        <div class="skeleton-card">
+          <div class="sk-line sk-title"></div>
+          <div class="sk-line sk-body1"></div>
+          <div class="sk-line sk-body2"></div>
+        </div>
+        <div class="skeleton-card">
+          <div class="sk-line sk-title"></div>
+          <div class="sk-line sk-body1"></div>
+          <div class="sk-line sk-body2"></div>
+          <div class="sk-line sk-body3"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -872,8 +913,110 @@ function showResults() {
   sessionStorage.setItem('cachedResults', JSON.stringify(cachedResults));
   sessionStorage.setItem('testMode', testMode);
 
+  saveToHistory({ m1, m2, finalScore, archetype });
   renderResultsHTML(cachedResults);
   goStep(7);
+}
+
+// ─── 기록 저장 (localStorage) ───
+function saveToHistory(data) {
+  try {
+    const history = JSON.parse(localStorage.getItem('mbti_history') || '[]');
+    history.unshift({
+      id: Date.now(),
+      date: new Date().toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
+      n1: person1.name || '나', n2: person2.name || '상대방',
+      m1: data.m1, m2: data.m2,
+      score: data.finalScore, archetype: data.archetype
+    });
+    localStorage.setItem('mbti_history', JSON.stringify(history.slice(0, 5)));
+    renderHistory();
+  } catch(e) {}
+}
+
+function renderHistory() {
+  const wrap = document.getElementById('historyWrap');
+  if (!wrap) return;
+  try {
+    const history = JSON.parse(localStorage.getItem('mbti_history') || '[]');
+    if (!history.length) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = `
+      <div class="history-wrap">
+        <div class="history-title">📋 최근 분석 기록</div>
+        ${history.map(e => `
+          <div class="history-item">
+            <span class="history-names">${e.n1} × ${e.n2}</span>
+            <span class="history-mbti">${e.m1}·${e.m2}</span>
+            <span class="history-score">${e.score}점</span>
+            <span class="history-date">${e.date}</span>
+          </div>
+        `).join('')}
+      </div>`;
+  } catch(e) {}
+}
+
+// ─── 결과 이미지 저장 ───
+function buildShareCardHTML(r) {
+  const { finalScore, scoreComment, archetype, categories, m1, m2 } = r;
+  const n1 = person1.name || '나', n2 = person2.name || '상대방';
+  const scoreColor = finalScore >= 75 ? '#c084fc' : finalScore >= 55 ? '#fb923c' : '#f87171';
+  const topCats = (categories || []).slice(0, 4);
+  return `<div style="width:600px;background:#0a0a12;padding:52px 48px;font-family:'Apple SD Gothic Neo',Arial,sans-serif;box-sizing:border-box;">
+    <div style="text-align:center;margin-bottom:36px;">
+      <div style="font-size:13px;letter-spacing:3px;color:#9d7ecf;margin-bottom:14px;">SOULMATE 궁합 분석</div>
+      <div style="font-size:42px;font-weight:900;color:#fff;margin-bottom:8px;">${n1} × ${n2}</div>
+      <div style="font-size:15px;color:#a78bca;">${m1} × ${m2}</div>
+    </div>
+    <div style="text-align:center;background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(219,39,119,0.15));border-radius:24px;padding:32px;margin-bottom:28px;">
+      <div style="font-size:80px;font-weight:900;color:${scoreColor};line-height:1;">${finalScore}</div>
+      <div style="font-size:16px;color:#e2d9f3;margin-top:6px;">점</div>
+      <div style="font-size:18px;font-weight:700;color:#fff;margin-top:14px;">${scoreComment}</div>
+      <div style="font-size:13px;color:#a78bca;margin-top:8px;background:rgba(201,160,255,0.1);display:inline-block;padding:6px 16px;border-radius:20px;">${archetype || ''}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px;">
+      ${topCats.map(c => `
+        <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:14px 16px;">
+          <div style="font-size:12px;color:#9d7ecf;margin-bottom:8px;">${c.name}</div>
+          <div style="background:rgba(255,255,255,0.08);border-radius:4px;height:6px;overflow:hidden;">
+            <div style="width:${c.score}%;height:6px;background:linear-gradient(90deg,#7c3aed,#db2777);border-radius:4px;"></div>
+          </div>
+          <div style="font-size:13px;font-weight:700;color:#e2d9f3;margin-top:6px;">${c.score}%</div>
+        </div>`).join('')}
+    </div>
+    <div style="text-align:center;font-size:12px;color:#6b5b8c;border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;">
+      mbti-goonghap.vercel.app
+    </div>
+  </div>`;
+}
+
+async function saveResultCard() {
+  if (!cachedResults) { alert('먼저 분석을 완료해주세요.'); return; }
+  const btn = document.querySelector('.save-img-btn');
+  if (btn) { btn.textContent = '⏳ 생성 중...'; btn.disabled = true; }
+
+  const el = document.createElement('div');
+  el.innerHTML = buildShareCardHTML(cachedResults);
+  el.style.cssText = 'position:absolute;top:0;left:0;width:600px;background:#0a0a12;z-index:99999;pointer-events:none;';
+  document.body.insertBefore(el, document.body.firstChild);
+  await new Promise(r => setTimeout(r, 200));
+
+  try {
+    const canvas = await html2canvas(el, {
+      scale: 2, backgroundColor: '#0a0a12', logging: false,
+      windowWidth: 600, height: el.scrollHeight, scrollX: 0, scrollY: 0
+    });
+    document.body.removeChild(el);
+    const n1 = person1.name || '나', n2 = person2.name || '상대방';
+    const link = document.createElement('a');
+    link.download = `${n1}_${n2}_궁합카드.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    if (btn) { btn.textContent = '📸 결과 이미지로 저장 (인스타·카카오)'; btn.disabled = false; }
+  } catch(e) {
+    if (document.body.contains(el)) document.body.removeChild(el);
+    if (btn) { btn.textContent = '📸 결과 이미지로 저장 (인스타·카카오)'; btn.disabled = false; }
+    alert('이미지 생성 중 오류가 발생했습니다.');
+  }
 }
 
 function renderResultsHTML(r) {
@@ -981,6 +1124,8 @@ function renderResultsHTML(r) {
     `}
 
     ${isPremium ? `<button class="pdf-btn" onclick="downloadPDF()">📄 PDF 리포트 다운로드</button>` : ''}
+
+    <button class="save-img-btn" onclick="saveResultCard()">📸 결과 이미지로 저장 (인스타·카카오)</button>
 
     <button class="kakao-share-btn" onclick="shareKakao()">
       <img src="https://developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png" alt="카카오">
@@ -1243,6 +1388,7 @@ async function downloadPDF() {
 
 document.addEventListener('DOMContentLoaded', () => {
   handlePaymentRedirect();
+  renderHistory();
   if (typeof Kakao !== 'undefined' && KAKAO_APP_KEY && !KAKAO_APP_KEY.includes('여기에')) {
     Kakao.init(KAKAO_APP_KEY);
   }

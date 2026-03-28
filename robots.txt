@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mbti-goonghap.vercel.app/sitemap.xml
