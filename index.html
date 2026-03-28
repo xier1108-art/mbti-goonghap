@@ -1190,8 +1190,12 @@ function downloadPDF() {
   const btn = document.querySelector('.pdf-btn');
   if (btn) { btn.textContent = '📄 생성 중...'; btn.disabled = true; }
 
-  // HTML 문자열을 직접 전달 — html2pdf가 내부적으로 DOM 생성·캡처·삭제 처리
-  // (DOM 요소 직접 전달 시 opacity/위치 트릭으로 인한 빈 페이지 문제 방지)
+  // DOM 요소를 fixed position(top:0)에 붙여서 캡처 — 문서 하단에 붙으면 빈 페이지 발생
+  const el = document.createElement('div');
+  el.innerHTML = buildPDFHTML(cachedResults);
+  el.style.cssText = 'position:fixed;top:0;left:0;width:794px;z-index:999999;background:#fff;';
+  document.body.appendChild(el);
+
   html2pdf().set({
     margin: [8, 0],
     filename: `${n1}_${n2}_궁합분석.pdf`,
@@ -1199,9 +1203,11 @@ function downloadPDF() {
     html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: 794 },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-  }).from(buildPDFHTML(cachedResults)).save().then(() => {
+  }).from(el).save().then(() => {
+    document.body.removeChild(el);
     if (btn) { btn.textContent = '📄 PDF 리포트 다운로드'; btn.disabled = false; }
   }).catch(() => {
+    if (document.body.contains(el)) document.body.removeChild(el);
     if (btn) { btn.textContent = '📄 PDF 리포트 다운로드'; btn.disabled = false; }
     alert('PDF 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
   });
