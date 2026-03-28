@@ -1000,22 +1000,41 @@ async function saveResultCard() {
   document.body.insertBefore(el, document.body.firstChild);
   await new Promise(r => setTimeout(r, 200));
 
+  const n1 = person1.name || '나', n2 = person2.name || '상대방';
+  const filename = `${n1}_${n2}_궁합카드.png`;
+
   try {
     const canvas = await html2canvas(el, {
       scale: 2, backgroundColor: '#0a0a12', logging: false,
       windowWidth: 600, height: el.scrollHeight, scrollX: 0, scrollY: 0
     });
     document.body.removeChild(el);
-    const n1 = person1.name || '나', n2 = person2.name || '상대방';
-    const link = document.createElement('a');
-    link.download = `${n1}_${n2}_궁합카드.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    if (btn) { btn.textContent = '📸 결과 이미지로 저장 (인스타·카카오)'; btn.disabled = false; }
+
+    // 캔버스 → Blob → File
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    const file = new File([blob], filename, { type: 'image/png' });
+
+    // 모바일: Web Share API로 공유 시트 띄우기 (인스타·카카오 등 선택 가능)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: `${n1} × ${n2} 궁합 ${cachedResults.finalScore}점`,
+        text: `우리 궁합 점수는 ${cachedResults.finalScore}점! ${cachedResults.scoreComment}\nmbti-goonghap.vercel.app`
+      });
+    } else {
+      // 데스크톱 또는 미지원 브라우저: 기존 다운로드
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }
+
+    if (btn) { btn.textContent = '📸 이미지 공유 / 저장'; btn.disabled = false; }
   } catch(e) {
     if (document.body.contains(el)) document.body.removeChild(el);
-    if (btn) { btn.textContent = '📸 결과 이미지로 저장 (인스타·카카오)'; btn.disabled = false; }
-    alert('이미지 생성 중 오류가 발생했습니다.');
+    if (btn) { btn.textContent = '📸 이미지 공유 / 저장'; btn.disabled = false; }
+    if (e.name !== 'AbortError') alert('이미지 생성 중 오류가 발생했습니다.');
   }
 }
 
@@ -1125,7 +1144,7 @@ function renderResultsHTML(r) {
 
     ${isPremium ? `<button class="pdf-btn" onclick="downloadPDF()">📄 PDF 리포트 다운로드</button>` : ''}
 
-    <button class="save-img-btn" onclick="saveResultCard()">📸 결과 이미지로 저장 (인스타·카카오)</button>
+    <button class="save-img-btn" onclick="saveResultCard()">📸 이미지 공유 / 저장</button>
 
     <button class="kakao-share-btn" onclick="shareKakao()">
       <img src="https://developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png" alt="카카오">
