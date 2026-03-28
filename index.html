@@ -251,8 +251,11 @@ body {
 }
 .paywall-card .paywall-desc { color: var(--text-dim); font-size: 13px; margin-bottom: 22px; line-height: 1.7; }
 .paywall-card .paywall-features {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+  flex-direction: unset;
+  max-width: 100% !important;
+  width: 100% !important;
   gap: 10px; margin-bottom: 24px;
 }
 .paywall-card .paywall-feature {
