@@ -18,7 +18,7 @@ const TOSS_CLIENT_KEY = "test_ck_vZnjEJeQVxzWk9xy4AYZ8PmOoBN0";
 
 // ② 카카오 JavaScript 앱키
 //    👉 발급: https://developers.kakao.com → 내 애플리케이션 → 앱 설정 → 앱 키 → JavaScript 키
-const KAKAO_APP_KEY = "d5afbe5a7ad2befe1841596ac08fbe3f";
+const KAKAO_APP_KEY = "f0171bc6bcbd343cea2e36521c7a20fb";
 
 
 // ================================================================
